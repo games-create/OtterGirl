@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Otter Girl</title>
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        #buttonContainer {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1;
+        }
+        #topButtonContainer {
+            position: fixed;
+            bottom: 100px; /* Changed from 50px to 100px to sit higher */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        .gameButton {
+            width: 81px;
+            height: 81px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+    </style>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <div id="topButtonContainer">
+        <button id="forwardButton" class="gameButton" style="background-image: url('./Straight.png');"></button>
+    </div>
+    <div id="buttonContainer">
+        <button id="leftButton" class="gameButton" style="background-image: url('./Left.png');"></button>
+        <button class="gameButton" style="background-image: url('./Catch.png');"></button>
+        <button id="rightButton" class="gameButton" style="background-image: url('./Right.png');"></button>
+    </div>
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+
+        const createScene = async function() {
+            const scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color3(1, 1, 1); // White background
+            const camera = new BABYLON.ArcRotateCamera("camera", 1, Math.PI / 4, 8, BABYLON.Vector3(0, 20, 0), scene);
+            // Lock camera rotation
+            camera.alpha = 1; // Lock horizontal rotation
+            camera.beta = Math.PI / 4; // Lock vertical rotation
+            camera.lowerRadiusLimit = 7; // Set minimum distance
+            camera.upperRadiusLimit = 7; // Set maximum distance
+            camera.inputs.attached.pointers.detachControl(); // Disable mouse/touch rotation
+            camera.inputs.attached.keyboard.detachControl(); // Disable keyboard rotation
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 3, 0), scene);
+
+            // Import character models
+            const idleModel = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "idle.glb", scene);
+            const walkModel = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "walk.glb", scene);
+           // const mapModel = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "map.glb", scene);
+            
+            // Position map model 5 units higher
+           // mapModel.meshes[0].position.y += 7.8;
+
+            // ... existing code ...
+            idleModel.meshes.forEach(mesh => {
+                if (mesh.material) {
+                    mesh.material.pointsCloud = true;
+                    mesh.material.pointSize = 8;
+                }
+            });
+            walkModel.meshes.forEach(mesh => {
+                if (mesh.material) {
+                    mesh.material.pointsCloud = true;
+                    mesh.material.pointSize = 8;
+                }
+            });
+            // ... existing code ...
+
+            // Hide walk model by default
+            walkModel.meshes.forEach(mesh => {
+                mesh.setEnabled(false);
+            });
+
+            // Create a small invisible cube
+            const box = BABYLON.MeshBuilder.CreateBox("box", {size: 0.5}, scene);
+            box.position = new BABYLON.Vector3(0, 0.25, 0);
+            box.visibility = 0; // Make cube invisible
+
+            // Parent models to the box
+            idleModel.meshes[0].parent = box;
+            walkModel.meshes[0].parent = box;
+
+            // Add keyboard controls
+            const moveSpeed = 0.02;
+            const rotationSpeed = 0.01;
+            const keys = { w: false, a: false, d: false };
+
+            // Add button controls
+            const forwardButton = document.getElementById('forwardButton');
+            const leftButton = document.getElementById('leftButton');
+            const rightButton = document.getElementById('rightButton');
+
+            // Handle button press events
+            forwardButton.addEventListener('mousedown', () => keys.w = true);
+            forwardButton.addEventListener('mouseup', () => keys.w = false);
+            forwardButton.addEventListener('touchstart', () => keys.w = true);
+            forwardButton.addEventListener('touchend', () => keys.w = false);
+
+            leftButton.addEventListener('mousedown', () => keys.a = true);
+            leftButton.addEventListener('mouseup', () => keys.a = false);
+            leftButton.addEventListener('touchstart', () => keys.a = true);
+            leftButton.addEventListener('touchend', () => keys.a = false);
+
+            rightButton.addEventListener('mousedown', () => keys.d = true);
+            rightButton.addEventListener('mouseup', () => keys.d = false);
+            rightButton.addEventListener('touchstart', () => keys.d = true);
+            rightButton.addEventListener('touchend', () => keys.d = false);
+
+            window.addEventListener("keydown", (event) => {
+                const key = event.key.toLowerCase();
+                if (key in keys) {
+                    keys[key] = true;
+                }
+            });
+
+            window.addEventListener("keyup", (event) => {
+                const key = event.key.toLowerCase();
+                if (key in keys) {
+                    keys[key] = false;
+                }
+            });
+
+            // Register before render to handle continuous movement
+            scene.registerBeforeRender(() => {
+                const isMoving = keys.w;
+                
+                // Normal movement/idle state
+                idleModel.meshes.forEach(mesh => {
+                    mesh.setEnabled(!isMoving);
+                });
+                walkModel.meshes.forEach(mesh => {
+                    mesh.setEnabled(isMoving);
+                });
+
+                if (keys.w) {
+                    // Move forward in the direction the box is facing
+                    const forward = new BABYLON.Vector3(
+                        Math.sin(box.rotation.y),
+                        0,
+                        Math.cos(box.rotation.y)
+                    );
+                    box.position.addInPlace(forward.scale(moveSpeed));
+                }
+                if (keys.a) {
+                    // Rotate left
+                    box.rotation.y -= rotationSpeed; // Inverted from += to -=
+                }
+                if (keys.d) {
+                    // Rotate right
+                    box.rotation.y += rotationSpeed; // Inverted from -= to +=
+                }
+
+                // Update camera position while maintaining fixed rotation
+                camera.target = box.position.clone();
+                camera.alpha = 1; // Keep horizontal rotation locked
+                camera.beta = Math.PI / 4; // Keep vertical rotation locked
+            });
+
+            return scene;
+        }
+
+        createScene().then(scene => {
+            engine.runRenderLoop(() => {
+                scene.render();
+            });
+        });
+
+        window.addEventListener("resize", () => {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
