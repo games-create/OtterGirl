@@ -25,13 +25,6 @@
             gap: 10px;
             z-index: 1;
         }
-        #topButtonContainer {
-            position: fixed;
-            bottom: 220px; /* Changed from 200px to 300px to sit even higher */
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1;
-        }
         .gameButton {
             width: 200px;
             height: 200px;
@@ -48,13 +41,11 @@
 </head>
 <body>
     <canvas id="renderCanvas"></canvas>
-    <div id="topButtonContainer">
-        <button id="forwardButton" class="gameButton" style="background-image: url('./Straight.png');"></button>
-    </div>
     <div id="buttonContainer">
         <button id="leftButton" class="gameButton" style="background-image: url('./Left.png');"></button>
         <button class="gameButton" style="background-image: url('./Catch.png');"></button>
         <button id="rightButton" class="gameButton" style="background-image: url('./Right.png');"></button>
+        <button id="forwardButton" class="gameButton" style="background-image: url('./Straight.png');"></button>
     </div>
     <script>
         const canvas = document.getElementById("renderCanvas");
