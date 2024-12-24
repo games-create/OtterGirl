@@ -34,6 +34,11 @@
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
+            opacity: 0.5; /* Make buttons semi-transparent */
+            transition: transform 0.1s; /* Smooth transition for scaling */
+        }
+        .gameButton:active {
+            transform: scale(0.9); /* Scale down button when pressed */
         }
     </style>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -43,7 +48,6 @@
     <canvas id="renderCanvas"></canvas>
     <div id="buttonContainer">
         <button id="leftButton" class="gameButton" style="background-image: url('./Left.png');"></button>
-        <button class="gameButton" style="background-image: url('./Catch.png');"></button>
         <button id="rightButton" class="gameButton" style="background-image: url('./Right.png');"></button>
         <button id="forwardButton" class="gameButton" style="background-image: url('./Straight.png');"></button>
     </div>
@@ -53,7 +57,7 @@
 
         const createScene = async function() {
             const scene = new BABYLON.Scene(engine);
-            scene.clearColor = new BABYLON.Color3(1, 1, 1); // White background
+            scene.clearColor = new BABYLON.Color3(1, 0.8, 0.86); // Pastel pink background
             const camera = new BABYLON.ArcRotateCamera("camera", 1, Math.PI / 4, 8, BABYLON.Vector3(0, 20, 0), scene);
             // Lock camera rotation
             camera.alpha = 1; // Lock horizontal rotation
@@ -67,22 +71,25 @@
             // Import character models
             const idleModel = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "idle.glb", scene);
             const walkModel = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "walk.glb", scene);
-           // const mapModel = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "map.glb", scene);
-            
-            // Position map model 5 units higher
-           // mapModel.meshes[0].position.y += 7.8;
+            const otterModel = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "otter.glb", scene);
 
             // ... existing code ...
             idleModel.meshes.forEach(mesh => {
                 if (mesh.material) {
                     mesh.material.pointsCloud = true;
-                    mesh.material.pointSize = 8;
+                    mesh.material.pointSize = 13;
                 }
             });
             walkModel.meshes.forEach(mesh => {
                 if (mesh.material) {
                     mesh.material.pointsCloud = true;
-                    mesh.material.pointSize = 8;
+                    mesh.material.pointSize = 13;
+                }
+            });
+            otterModel.meshes.forEach(mesh => {
+                if (mesh.material) {
+                    mesh.material.pointsCloud = true;
+                    mesh.material.pointSize = 4.5;
                 }
             });
             // ... existing code ...
@@ -101,9 +108,20 @@
             idleModel.meshes[0].parent = box;
             walkModel.meshes[0].parent = box;
 
+            // Distribute 5 otter models at random positions with random Y rotations
+            for (let i = 0; i < 5; i++) {
+                const otterClone = otterModel.meshes[0].clone(`otterClone${i}`);
+                otterClone.position = new BABYLON.Vector3(Math.random() * 10 - 5, 0.17, Math.random() * 10 - 5);
+                otterClone.rotationQuaternion = BABYLON.Quaternion.RotationAxis(BABYLON.Vector3.Up(), Math.random() * Math.PI * 2);
+                otterClone.scaling = new BABYLON.Vector3(1.7, 1.7, 1.7);
+            }
+
+            // Hide the otter located at 0,0,0
+            otterModel.meshes[0].setEnabled(false);
+
             // Add keyboard controls
             const moveSpeed = 0.02;
-            const rotationSpeed = 0.01;
+            const rotationSpeed = 0.02;
             const keys = { w: false, a: false, d: false };
 
             // Add button controls
