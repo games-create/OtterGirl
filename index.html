@@ -11,6 +11,9 @@
             margin: 0;
             padding: 0;
             background-color: #FFE4E1; /* Pastel pink */
+            -webkit-touch-callout: none; /* Disable long press on iOS */
+            -webkit-user-select: none; /* Disable text selection on iOS */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
         }
         #renderCanvas {
             width: 100%;
@@ -40,6 +43,10 @@
             transition: transform 0.1s;
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .gameButton:active {
             transform: scale(0.9);
@@ -375,18 +382,36 @@
 
             forwardButton.addEventListener('mousedown', () => keys.w = true);
             forwardButton.addEventListener('mouseup', () => keys.w = false);
-            forwardButton.addEventListener('touchstart', () => keys.w = true);
-            forwardButton.addEventListener('touchend', () => keys.w = false);
+            forwardButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys.w = true;
+            });
+            forwardButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys.w = false;
+            });
 
             leftButton.addEventListener('mousedown', () => keys.a = true);
             leftButton.addEventListener('mouseup', () => keys.a = false);
-            leftButton.addEventListener('touchstart', () => keys.a = true);
-            leftButton.addEventListener('touchend', () => keys.a = false);
+            leftButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys.a = true;
+            });
+            leftButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys.a = false;
+            });
 
             rightButton.addEventListener('mousedown', () => keys.d = true);
             rightButton.addEventListener('mouseup', () => keys.d = false);
-            rightButton.addEventListener('touchstart', () => keys.d = true);
-            rightButton.addEventListener('touchend', () => keys.d = false);
+            rightButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys.d = true;
+            });
+            rightButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys.d = false;
+            });
 
             window.addEventListener("keydown", (event) => {
                 if (!gameStarted) return;
